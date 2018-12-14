@@ -91,11 +91,8 @@ for y in tqdm(range(int((height - (80 - step)) / step))):
 for e in coordinates:
     show_ship(e[0][0], e[0][1], e[1][0][1])
 
-
-# picture_tensor = picture_tensor.transpose(2,0,1)
 picture_tensor = picture_tensor.transpose(1, 2, 0)
-picture_tensor.shape
+print picture_tensor.shape
 
-plt.figure(1, figsize=(15, 30))
-plt.imshow(picture_tensor)
-plt.show()
+result_image = Image.fromarray(picture_tensor)
+result_image.save('result/result_image.png', 'PNG')
