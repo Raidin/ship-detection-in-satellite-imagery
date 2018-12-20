@@ -1,47 +1,17 @@
 from tqdm import tqdm
-import sys
+import os
+import numpy as np
+from PIL import Image
+
 from keras.models import model_from_json
 
-import numpy as np
-from PIL import Image, ImageDraw
-from matplotlib import pyplot as plt
-
-json_file = open("model/model.json", "r")
-loaded_model_json = json_file.read()
-json_file.close()
-loaded_model = model_from_json(loaded_model_json)
-
-loaded_model.load_weights("model/weight.h5")
-print("Loaded model from disk")
-
-image = Image.open('/home/jihunjung/Downloads/Satellite_Image_Dataset_with_ship_plane/scenes/sfbay_2.png')
-pix = image.load()
-n_spectrum = 3
-width = image.size[0]
-height = image.size[1]
-# creat vector
-picture_vector = []
-for chanel in range(n_spectrum):
-    for y in range(height):
-        for x in range(width):
-            picture_vector.append(pix[x, y][chanel])
-
-picture_vector = np.array(picture_vector).astype('uint8')
-picture_tensor = picture_vector.reshape([n_spectrum, height, width]).transpose(1, 2, 0)
-
-# plt.figure(1, figsize=(30, 30))
-# plt.imshow(picture_tensor)
-# plt.show()
-
-picture_tensor = picture_tensor.transpose(2, 0, 1)
-
-def cutting(x, y):
+def cutting(img, x, y):
     area_study = np.arange(3 * 80 * 80).reshape(3, 80, 80)
     for i in range(80):
         for j in range(80):
-            area_study[0][i][j] = picture_tensor[0][y + i][x + j]
-            area_study[1][i][j] = picture_tensor[1][y + i][x + j]
-            area_study[2][i][j] = picture_tensor[2][y + i][x + j]
+            area_study[0][i][j] = img[0][y + i][x + j]
+            area_study[1][i][j] = img[1][y + i][x + j]
+            area_study[2][i][j] = img[2][y + i][x + j]
     area_study = area_study.reshape([-1, 3, 80, 80])
     area_study = area_study.transpose([0, 2, 3, 1])
     area_study = area_study / 255
@@ -53,46 +23,96 @@ def not_near(x, y, s, coordinates):
         if x + s > e[0][0] and x - s < e[0][0] and y + s > e[0][1] and y - s < e[0][1]:
             result = False
     return result
-def show_ship(x, y, acc, thickness=5):
+def show_ship(img, x, y, acc, thickness=1):
+    #.Left
     for i in range(80):
-        for ch in range(3):
-            for th in range(thickness):
-                picture_tensor[ch][y + i][x - th] = -1
+        for th in range(thickness):
+            img[0][y + i][x - th] = 255
+            img[1][y + i][x - th] = 0
+            img[2][y + i][x - th] = 0
 
+    # Right
     for i in range(80):
-        for ch in range(3):
-            for th in range(thickness):
-                picture_tensor[ch][y + i][x + th + 80] = -1
+        for th in range(thickness):
+            img[0][y + i][x + th + 80] = 255
+            img[1][y + i][x + th + 80] = 0
+            img[2][y + i][x + th + 80] = 0
 
+    # Top
     for i in range(80):
-        for ch in range(3):
-            for th in range(thickness):
-                picture_tensor[ch][y - th][x + i] = -1
+        for th in range(thickness):
+            img[0][y - th][x + i] = 255
+            img[1][y - th][x + i] = 0
+            img[2][y - th][x + i] = 0
 
+    # Bottom
     for i in range(80):
-        for ch in range(3):
-            for th in range(thickness):
-                picture_tensor[ch][y + th + 80][x + i] = -1
+        for th in range(thickness):
+            img[0][y + th + 80][x + i] = 255
+            img[1][y + th + 80][x + i] = 0
+            img[2][y + th + 80][x + i] = 0
 
+def LoadModel():
+    # Load Network Model
+    network_arch='alexnet'
+    json_file = open("model/{}_model.json".format(network_arch), "r")
+    loaded_model_json = json_file.read()
+    json_file.close()
+    loaded_model = model_from_json(loaded_model_json)
 
-step = 10
-coordinates = []
+    # Load Trained Weight
+    loaded_model.load_weights("model/{}_weight.h5".format(network_arch))
+    print("Loaded model from disk")
+    return loaded_model
 
-for y in tqdm(range(int((height - (80 - step)) / step))):
-    for x in tqdm(range(int((width - (80 - step)) / step))):
-        area = cutting(x * step, y * step)
-        result = loaded_model.predict(area)
-        if result[0][1] > 0.90 and not_near(x * step, y * step, 88, coordinates):
-            coordinates.append([[x * step, y * step], result])
-            print("Probability :: ", result)
-            # plt.imshow(area[0])
-            # plt.show()
+def ReadImage(image_path, idx):
+    image = Image.open(image_path)
+    pix = image.load()
+    n_spectrum = 3
+    width = image.size[0]
+    height = image.size[1]
+    # creat vector
+    picture_vector = []
+    for chanel in range(n_spectrum):
+        for y in range(height):
+            for x in range(width):
+                picture_vector.append(pix[x, y][chanel])
 
-for e in coordinates:
-    show_ship(e[0][0], e[0][1], e[1][0][1])
+    picture_vector = np.array(picture_vector).astype('uint8')
+    picture_tensor = picture_vector.reshape([n_spectrum, height, width]).transpose(1, 2, 0)
+    picture_tensor = picture_tensor.transpose(2, 0, 1)
+    return width, height, picture_tensor
 
-picture_tensor = picture_tensor.transpose(1, 2, 0)
-print picture_tensor.shape
+def main():
+    # Load Network Model
+    model = LoadModel()
 
-result_image = Image.fromarray(picture_tensor)
-result_image.save('result/result_image.png', 'PNG')
+    data_dir = 'data/scenes'
+    print os.listdir(data_dir)
+
+    for idx, img_file in tqdm(enumerate(os.listdir(data_dir))):
+        input_image = os.path.join(data_dir, img_file)
+        width, height, picture_tensor = ReadImage(input_image, idx)
+
+        step = 10
+        coordinates = []
+
+        for y in tqdm(range(int((height - (80 - step)) / step))):
+            for x in tqdm(range(int((width - (80 - step)) / step))):
+                area = cutting(picture_tensor, x * step, y * step)
+                result = model.predict(area)
+                if result[0][1] > 0.90 and not_near(x * step, y * step, 88, coordinates):
+                    coordinates.append([[x * step, y * step], result])
+                    print("Probability :: ", result)
+
+        for e in coordinates:
+            show_ship(picture_tensor, e[0][0], e[0][1], e[1][0][1])
+
+        # Transpose to Image Type
+        picture_tensor = picture_tensor.transpose(1, 2, 0)
+        result_image = Image.fromarray(picture_tensor)
+        save_str = 'result/{}_image.png'.format(idx)
+        result_image.save(save_str, 'PNG')
+
+if __name__ == '__main__':
+    main()
