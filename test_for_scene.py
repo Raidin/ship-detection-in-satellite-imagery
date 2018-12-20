@@ -1,9 +1,9 @@
-from tqdm import tqdm
-import os
 import numpy as np
-from PIL import Image
+import os
 
 from keras.models import model_from_json
+from tqdm import tqdm
+from PIL import Image
 
 def cutting(img, x, y):
     area_study = np.arange(3 * 80 * 80).reshape(3, 80, 80)
@@ -54,16 +54,17 @@ def show_ship(img, x, y, acc, thickness=1):
 
 def LoadModel():
     # Load Network Model
-    network_arch='alexnet'
-    json_file = open("model/{}_model.json".format(network_arch), "r")
+    network_arch = 'defaultNet'
+    json_file = open("model/{}/network_model.json".format(network_arch), "r")
     loaded_model_json = json_file.read()
     json_file.close()
-    loaded_model = model_from_json(loaded_model_json)
+    model = model_from_json(loaded_model_json)
 
     # Load Trained Weight
-    loaded_model.load_weights("model/{}_weight.h5".format(network_arch))
+    model.load_weights("model/{}/trained_weight.h5".format(network_arch))
     print("Loaded model from disk")
-    return loaded_model
+
+    return model
 
 def ReadImage(image_path, idx):
     image = Image.open(image_path)

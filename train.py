@@ -1,25 +1,25 @@
-import os
-import json
-import numpy as np
 import generation_model
+import json
 import matplotlib.pyplot as plt
+import numpy as np
+import os
+
 from keras.utils import np_utils
 from keras.optimizers import SGD
 from keras.utils import plot_model
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 
-def SaveNetworkModel(model, save_dir, type=1):
+def SaveNetworkModel(model, save_dir):
     # Model to Save File
-    if type == 0:
-        # To Json
-        model_json = model.to_json()
-        with open('{}/network_model.json'.format(save_dir), 'w') as json_file:
-            json_file.write(model_json)
-    elif type == 1:
-        # To Text File
-        with open('{}/network_model.txt'.format(save_dir), 'w') as model_file:
-            # Pass the file handle in as a lambda function to make it callable
-            model.summary(print_fn=lambda x: model_file.write(x + '\n'))
+    # To Json
+    model_json = model.to_json()
+    with open('{}/network_model.json'.format(save_dir), 'w') as json_file:
+        json_file.write(model_json)
+    # To Text File
+    with open('{}/network_model.txt'.format(save_dir), 'w') as model_file:
+        # Pass the file handle in as a lambda function to make it callable
+        model.summary(print_fn=lambda x: model_file.write(x + '\n'))
 
     # To Model Visualization
     plot_model(model, to_file='{}/model_plot.png'.format(save_dir), show_shapes=True, show_layer_names=True)
@@ -98,7 +98,7 @@ def main():
 
     print "Training Start..."
     # training
-    history = model.fit(image_train, label_train, batch_size=32, epochs=2,
+    history = model.fit(image_train, label_train, batch_size=32, epochs=18,
                             validation_split=0.2, shuffle=True, verbose=2)
     print "Training END..."
 
