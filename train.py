@@ -8,6 +8,9 @@ from keras.utils import np_utils
 from keras.optimizers import SGD
 from keras.utils import plot_model
 
+# Feature scaling import
+from sklearn.preprocessing import minmax_scale # [0-1] Scaling
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 
 def SaveNetworkModel(model, save_dir):
@@ -51,7 +54,7 @@ def VisualizationPlot(history, save_dir):
 
 def main():
     print ' ===== Ship Detection In Satellite Practice ===== '
-    network_arch = 'defaultNet'
+    network_arch = 'defaultNet_2'
     save_dir = os.path.join('model', network_arch)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -60,13 +63,16 @@ def main():
     f = open('data/shipsnet.json')
     dataset = json.load(f)
 
-    input_data = np.array(dataset['data']).astype('uint8')
+    input_data = np.array(dataset['data']).astype('float64')
     output_data = np.array(dataset['labels']).astype('uint8')
 
     # color chanel (RGB)
     channel = 3
     weight = 80
     height = 80
+
+    # normalization to [0~1] (Using min/max scaling)
+    input_data = minmax_scale(input_data, feature_range=(0, 1), axis=0)
 
     # input image & label reshape
     images = input_data.reshape([-1, channel, weight, height]).transpose([0, 2, 3, 1])
@@ -77,9 +83,6 @@ def main():
     np.random.shuffle(indexes)
     image_train = images[indexes]
     label_train = labels[indexes]
-
-    # normalization to [0~1]
-    image_train = image_train / 255
 
     np.random.seed(42)
 

@@ -12,17 +12,24 @@ def cutting(img, x, y):
             area_study[0][i][j] = img[0][y + i][x + j]
             area_study[1][i][j] = img[1][y + i][x + j]
             area_study[2][i][j] = img[2][y + i][x + j]
+
+    # scaling
+    # area_study = minmax_scale(area_study, feature_range=(0, 1), axis=0)
     area_study = area_study.reshape([-1, 3, 80, 80])
     area_study = area_study.transpose([0, 2, 3, 1])
-    area_study = area_study / 255
+
+    area_study.astype(np.float64)
+    area_study = area_study / 255.0
     # sys.stdout.write('\rX:{0} Y:{1}  '.format(x, y))
     return area_study
+
 def not_near(x, y, s, coordinates):
     result = True
     for e in coordinates:
         if x + s > e[0][0] and x - s < e[0][0] and y + s > e[0][1] and y - s < e[0][1]:
             result = False
     return result
+
 def show_ship(img, x, y, acc, thickness=1):
     #.Left
     for i in range(80):
@@ -82,6 +89,7 @@ def ReadImage(image_path, idx):
     picture_vector = np.array(picture_vector).astype('uint8')
     picture_tensor = picture_vector.reshape([n_spectrum, height, width]).transpose(1, 2, 0)
     picture_tensor = picture_tensor.transpose(2, 0, 1)
+
     return width, height, picture_tensor
 
 def main():
@@ -114,6 +122,7 @@ def main():
         result_image = Image.fromarray(picture_tensor)
         save_str = 'result/{}_image.png'.format(idx)
         result_image.save(save_str, 'PNG')
+
 
 if __name__ == '__main__':
     main()
