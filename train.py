@@ -7,6 +7,7 @@ import os
 from keras.utils import np_utils
 from keras.optimizers import SGD
 from keras.utils import plot_model
+from keras.callbacks import CSVLogger
 
 # Feature scaling import
 from sklearn.preprocessing import minmax_scale # [0-1] Scaling
@@ -87,7 +88,7 @@ def main():
     np.random.seed(42)
 
     # network design
-    if network_arch == 'defaultNet':
+    if network_arch == 'defaultNet_2':
         model = generation_model.DefaultNet()
     elif network_arch == 'simpleNet_01':
         model = generation_model.SimpleNet_01()()
@@ -99,10 +100,12 @@ def main():
     # save network model
     SaveNetworkModel(model, save_dir)
 
+    csv_logger = CSVLogger('{}/log.csv'.format(save_dir), append=True, separator=';')
+
     print "Training Start..."
     # training
-    history = model.fit(image_train, label_train, batch_size=32, epochs=18,
-                            validation_split=0.2, shuffle=True, verbose=2)
+    history = model.fit(image_train, label_train, batch_size=32, epochs=30,
+                            validation_split=0.2, shuffle=True, verbose=2, callbacks=[csv_logger])
     print "Training END..."
 
     # save trained weight
