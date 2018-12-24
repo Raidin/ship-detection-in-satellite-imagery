@@ -33,33 +33,27 @@ def SaveWeight(model, save_dir):
     model.save_weights("{}/trained_weight.h5".format(save_dir))
     print "Saved training weight to disk..."
 
-def VisualizationPlot(history, save_dir):
-    fig, axs = plt.subplots(2, 1, constrained_layout=True)
+def VisualizationPlot(hist, save_dir):
+    fig, loss_ax = plt.subplots()
+    acc_ax = loss_ax.twinx()
 
-    axs[0].plot(history.history['acc'])
-    axs[0].plot(history.history['val_acc'])
-    axs[0].set_title('Model accuracy')
-    axs[0].set_ylabel('Accuracy')
-    axs[0].set_xlabel('Epoch')
-    axs[0].legend(['Train', 'Test'], loc='upper left')
+    loss_ax.plot(hist.history['loss'], 'y', label='train loss')
+    loss_ax.plot(hist.history['val_loss'], 'r', label='val loss')
 
-    axs[1].plot(history.history['loss'])
-    axs[1].plot(history.history['val_loss'])
-    axs[1].set_title('Model Loss')
-    axs[1].set_ylabel('Loss')
-    axs[1].set_xlabel('Epoch')
-    axs[1].legend(['Train', 'Test'], loc='upper left')
+    acc_ax.plot(hist.history['acc'], 'b', label='train acc')
+    acc_ax.plot(hist.history['val_acc'], 'g', label='val acc')
+
+    loss_ax.set_xlabel('Epoch')
+    loss_ax.set_ylabel('Loss')
+    acc_ax.set_ylabel('Accuray')
+
+    loss_ax.legend(loc='upper left')
+    acc_ax.legend(loc='lower left')
 
     fig.suptitle('Training Results(Accuracy & Loss)', fontsize=16)
     fig.savefig('{}/training_result_plot.png'.format(save_dir))
 
-def main():
-    print ' ===== Ship Detection In Satellite Practice ===== '
-    network_arch = 'defaultNet_2'
-    save_dir = os.path.join('model', network_arch)
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
+def LoadDataset():
     print ' - Json File Open...'
     f = open('data/shipsnet.json')
     dataset = json.load(f)
@@ -85,6 +79,18 @@ def main():
     image_train = images[indexes]
     label_train = labels[indexes]
 
+    return image_train, label_train
+
+def main():
+    print ' ===== Ship Detection In Satellite Practice ===== '
+    network_arch = 'defaultNet_2'
+    save_dir = os.path.join('model', network_arch)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    # Load Dataset
+    image_train, label_train = LoadDataset()
+
     np.random.seed(42)
 
     # network design
@@ -104,8 +110,10 @@ def main():
 
     print "Training Start..."
     # training
-    history = model.fit(image_train, label_train, batch_size=32, epochs=30,
+    # history = model.fit(image_train, label_train, batch_size=32, epochs=30, validation_split=0.2, shuffle=True, verbose=2, callbacks=[csv_logger])
+    history = model.fit(image_train, label_train, batch_size=32, epochs=200,
                             validation_split=0.2, shuffle=True, verbose=2, callbacks=[csv_logger])
+
     print "Training END..."
 
     # save trained weight
