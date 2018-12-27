@@ -1,6 +1,8 @@
+import argparse
 import numpy as np
 import os
 
+from common import make_if_not_exist
 from matplotlib import pyplot as plt
 from keras.models import model_from_json
 from tqdm import tqdm
@@ -61,17 +63,15 @@ def DisplayBox(img, x, y, acc, thickness=1):
             img[1][y + th + 80][x + i] = 0
             img[2][y + th + 80][x + i] = 0
 
-def LoadModel():
+def LoadModel(model_dir):
     # Load Network Model
-    # network_arch = 'defaultNet'
-    network_arch = 'AlexNet'
-    json_file = open("model/{}/network_model.json".format(network_arch), "r")
+    json_file = open("{}/network_model.json".format(model_dir), "r")
     loaded_model_json = json_file.read()
     json_file.close()
     model = model_from_json(loaded_model_json)
 
     # Load Trained Weight
-    model.load_weights("model/{}/trained_weight.h5".format(network_arch))
+    model.load_weights("{}/trained_weight.h5".format(model_dir))
     print("Loaded model from disk")
 
     return model
@@ -97,17 +97,19 @@ def ReadImage(image_path, idx):
 
     return width, height, picture_tensor
 
-def main():
+def main(config):
     # Load Network Model
-    model = LoadModel()
-
-    data_dir = 'data/scenes'
-    print os.listdir(data_dir)
+    model = LoadModel(config['model-dir'])
+    # Test Data Path
+    data_dir = os.path.join(config['root-dir'], 'data/scenes')
 
     # Test Image list Load
     for idx, img_file in tqdm(enumerate(os.listdir(data_dir))):
         input_image = os.path.join(data_dir, img_file)
         width, height, picture_tensor = ReadImage(input_image, idx)
+
+        sub_dir = os.path.join(config['output-dir'], 'image_{}'.format(idx))
+        make_if_not_exist(sub_dir)
 
         # Window Sliding Stride
         step = 10
@@ -119,14 +121,14 @@ def main():
             for x in range(int((width - (80 - step)) / step)):
                 area = CropImage(picture_tensor, x * step, y * step)
                 result = model.predict(area)
-                if result[0][1] > 0.95 and CheckNearWindow(x * step, y * step, 88, coordinates):
-                    coordinates.append([[x * step, y * step], result])
+                if result[0][1] > 0.90 and CheckNearWindow(x * step, y * step, 88, coordinates):
                     # print 'Probability :: ', result[0][1]
-                    if 0:
+                    coordinates.append([[x * step, y * step], result])
+                    if config['save-bbox']:
                         area = np.squeeze(area, axis=0)
                         plt.imshow(area)
                         plt.title('Probability :: {}'.format(result[0][1]))
-                        plt.show()
+                        plt.savefig('{}/{}.png'.format(sub_dir, result[0][1]))
 
         # display detection box
         picture_tensor = picture_tensor.transpose(1, 2, 0)
@@ -140,8 +142,37 @@ def main():
             plt.gca().text(e[0][0], e[0][1], 'prob ::  {:.3f}'.format(e[1][0][1]),
                                 bbox=dict(facecolor=(1, 0, 0), alpha=0.5), fontsize=9, color='white')
 
-        plt.savefig('result/{}_image.png'.format(idx))
+        plt.savefig('{}/{}_image.png'.format(config['output-dir'], idx))
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='Process some parameters.')
+    parser.add_argument('--job-name', default='AlexNet', help='Current operation job name')
+    parser.add_argument('--save_bbox', type=bool, default='True', help='Is Apply Saving BBox')
+    args = parser.parse_args()
+
+    cur_dir = os.getcwd()
+    root_dir = os.path.abspath(os.path.join(cur_dir, ".."))
+    work_dir = os.path.join(root_dir, 'work')
+    jobs_dir = os.path.join(work_dir, args.job_name)
+    model_dir = os.path.join(jobs_dir, 'model')
+    output_dir = os.path.join(jobs_dir, 'output')
+
+    config = {'job-name': args.job_name,
+                'save-bbox': args.save_bbox,
+                'root-dir': root_dir,
+                'work-dir': work_dir,
+                'jobs-dir': jobs_dir,
+                'model-dir': model_dir,
+                'output-dir': output_dir}
+
+    print '\n\n::::: Configuration Value :::::'
+    for config_key in config.keys():
+        print ' - {} :: {}'.format(config_key, config[config_key])
+
+    make_if_not_exist(work_dir)
+    make_if_not_exist(jobs_dir)
+    make_if_not_exist(model_dir)
+    make_if_not_exist(output_dir)
+
+    main(config)
