@@ -137,7 +137,6 @@ def main(config):
     SaveNetworkModel(model, config['model-dir'])
     csv_logger = CSVLogger('{}/log.csv'.format(config['model-dir']), append=True, separator=';')
 
-    print "Training Start..."
     # 4.training
     print '4. Training Network Model...'
     history = model.fit(image_train, label_train, batch_size=config['batch-size'], epochs=config['epochs'],
