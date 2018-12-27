@@ -36,37 +36,12 @@ def DefaultNet():
 
     return model
 
-def SimpleNet_01():
-    model = Sequential()
-    model.add(Conv2D(32, (3, 3), padding="same", input_shape=(80, 80, 3), activation='relu'))
-    model.add(Conv2D(32, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.2))
-
-    model.add(Conv2D(64, (3, 3), padding="same", activation='relu'))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    # model.add(Dropout(0.2))
-
-    # model.add(Conv2D(128, (3, 3), padding="same", activation='relu'))
-    # model.add(Conv2D(128, (3, 3), activation='relu'))
-    # model.add(MaxPooling2D(pool_size=(2, 2)))
-    # model.add(Dropout(0.2))
-
-    model.add(Flatten())
-    model.add(Dense(512, activation='relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(2, activation='softmax'))
-
-    return model
-
 def AlexNet(img_shape=(80, 80, 3), n_classes=2, l2_reg=0., weights=None):
     # Initialize model
     alexnet = Sequential()
 
     # Layer 1
-    alexnet.add(Conv2D(96, (11, 11), input_shape=img_shape,
-        padding='same', kernel_regularizer=l2(l2_reg)))
+    alexnet.add(Conv2D(96, (11, 11), input_shape=img_shape, padding='same', kernel_regularizer=l2(l2_reg)))
     alexnet.add(BatchNormalization())
     alexnet.add(Activation('relu'))
     alexnet.add(MaxPooling2D(pool_size=(2, 2)))
