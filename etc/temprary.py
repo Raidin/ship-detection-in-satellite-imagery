@@ -62,6 +62,12 @@ def DisplayLabelUsingPlt():
     #                     bbox=dict(facecolor=(1, 0, 0), alpha=0.5), fontsize=9, color='white')
     return 0
 
+def Numpy2Image(arr):
+    # Transpose to Image Type
+    result_image = Image.fromarray(arr)
+    save_str = 'image.png'
+    result_image.save(save_str, 'PNG')
+
 
 if __name__ == '__main__':
     # main()
