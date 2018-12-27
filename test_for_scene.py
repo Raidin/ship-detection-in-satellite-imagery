@@ -1,25 +1,26 @@
 import numpy as np
 import os
 
+from matplotlib import pyplot as plt
 from keras.models import model_from_json
 from tqdm import tqdm
 from PIL import Image
+# Feature scaling import
+# [0-1] Scaling
+from sklearn.preprocessing import minmax_scale
 
 def CropImage(img, x, y):
-    area_study = np.arange(3 * 80 * 80).reshape(3, 80, 80)
+    area_study = np.arange(3 * 80 * 80).reshape(3, 80, 80).astype('float64')
     for i in range(80):
         for j in range(80):
             area_study[0][i][j] = img[0][y + i][x + j]
             area_study[1][i][j] = img[1][y + i][x + j]
             area_study[2][i][j] = img[2][y + i][x + j]
 
-    # scaling
-    # area_study = minmax_scale(area_study, feature_range=(0, 1), axis=0)
     area_study = area_study.reshape([-1, 3, 80, 80])
     area_study = area_study.transpose([0, 2, 3, 1])
 
-    area_study.astype(np.float64)
-    area_study = area_study / 255.0
+    # area_study = area_study / 255.0
     # sys.stdout.write('\rX:{0} Y:{1}  '.format(x, y))
     return area_study
 
@@ -30,6 +31,7 @@ def CheckNearWindow(x, y, s, coordinates):
             result = False
     return result
 
+# Before Display Detection Box Method
 def DisplayBox(img, x, y, acc, thickness=1):
     # Left
     for i in range(80):
@@ -61,7 +63,8 @@ def DisplayBox(img, x, y, acc, thickness=1):
 
 def LoadModel():
     # Load Network Model
-    network_arch = 'defaultNet'
+    # network_arch = 'defaultNet'
+    network_arch = 'AlexNet'
     json_file = open("model/{}/network_model.json".format(network_arch), "r")
     loaded_model_json = json_file.read()
     json_file.close()
@@ -86,9 +89,11 @@ def ReadImage(image_path, idx):
             for x in range(width):
                 picture_vector.append(pix[x, y][chanel])
 
-    picture_vector = np.array(picture_vector).astype('uint8')
-    picture_tensor = picture_vector.reshape([n_spectrum, height, width]).transpose(1, 2, 0)
-    picture_tensor = picture_tensor.transpose(2, 0, 1)
+    picture_vector = np.array(picture_vector).astype('float64')
+    picture_vector = minmax_scale(picture_vector, feature_range=(0, 1), axis=0)
+
+    # Shape :: channel x hegith x widht
+    picture_tensor = picture_vector.reshape([n_spectrum, height, width])
 
     return width, height, picture_tensor
 
@@ -111,12 +116,12 @@ def main():
 
         # Window Sliding Processing Logic
         for y in tqdm(range(int((height - (80 - step)) / step))):
-            for x in tqdm(range(int((width - (80 - step)) / step))):
+            for x in range(int((width - (80 - step)) / step)):
                 area = CropImage(picture_tensor, x * step, y * step)
                 result = model.predict(area)
-                if result[0][1] > 0.90 and CheckNearWindow(x * step, y * step, 88, coordinates):
+                if result[0][1] > 0.95 and CheckNearWindow(x * step, y * step, 88, coordinates):
                     coordinates.append([[x * step, y * step], result])
-                    print 'Probability :: ', result[0][1]
+                    # print 'Probability :: ', result[0][1]
                     if 0:
                         area = np.squeeze(area, axis=0)
                         plt.imshow(area)
@@ -124,14 +129,18 @@ def main():
                         plt.show()
 
         # display detection box
-        for e in coordinates:
-            DisplayBox(picture_tensor, e[0][0], e[0][1], e[1][0][1])
-
-        # Transpose to Image Type
         picture_tensor = picture_tensor.transpose(1, 2, 0)
-        result_image = Image.fromarray(picture_tensor)
-        save_str = 'result/{}_image.png'.format(idx)
-        result_image.save(save_str, 'PNG')
+        plt.cla()
+        plt.figure(figsize=(30, 30))
+        plt.imshow(picture_tensor)
+        for e in coordinates:
+            # DisplayBox(picture_tensor, e[0][0], e[0][1], e[1][0][1])
+            rect = plt.Rectangle((e[0][0], e[0][1]), 80, 80, fill=False, edgecolor=(1, 0, 0), linewidth=2.5)
+            plt.gca().add_patch(rect)
+            plt.gca().text(e[0][0], e[0][1], 'prob ::  {:.3f}'.format(e[1][0][1]),
+                                bbox=dict(facecolor=(1, 0, 0), alpha=0.5), fontsize=9, color='white')
+
+        plt.savefig('result/{}_image.png'.format(idx))
 
 
 if __name__ == '__main__':
