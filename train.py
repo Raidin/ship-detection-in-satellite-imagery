@@ -71,6 +71,7 @@ def LoadDataset():
 
     # input image & label reshape
     images = input_data.reshape([-1, channel, weight, height]).transpose([0, 2, 3, 1])
+
     labels = np_utils.to_categorical(output_data, 2)
 
     # shuffle all indexes
@@ -83,7 +84,8 @@ def LoadDataset():
 
 def main():
     print ' ===== Ship Detection In Satellite Practice ===== '
-    network_arch = 'defaultNet_2'
+    # network_arch = 'defaultNet_2'
+    network_arch = 'AlexNet'
     save_dir = os.path.join('model', network_arch)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -91,13 +93,16 @@ def main():
     # Load Dataset
     image_train, label_train = LoadDataset()
 
+    # define numpy seed
     np.random.seed(42)
 
     # network design
     if network_arch == 'defaultNet_2':
         model = generation_model.DefaultNet()
     elif network_arch == 'simpleNet_01':
-        model = generation_model.SimpleNet_01()()
+        model = generation_model.SimpleNet_01()
+    elif network_arch == 'AlexNet':
+        model = generation_model.AlexNet()
 
     # optimization setup
     sgd = SGD(lr=0.01, momentum=0.9, nesterov=True)
@@ -111,8 +116,8 @@ def main():
     print "Training Start..."
     # training
     # history = model.fit(image_train, label_train, batch_size=32, epochs=30, validation_split=0.2, shuffle=True, verbose=2, callbacks=[csv_logger])
-    history = model.fit(image_train, label_train, batch_size=32, epochs=200,
-                            validation_split=0.2, shuffle=True, verbose=2, callbacks=[csv_logger])
+    history = model.fit(image_train, label_train, batch_size=32, epochs=20,
+                            shuffle=True, verbose=2, callbacks=[csv_logger])
 
     print "Training END..."
 
