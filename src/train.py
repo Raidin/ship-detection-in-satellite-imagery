@@ -40,7 +40,7 @@ from common import make_if_not_exist
 from keras.utils import np_utils
 from keras.optimizers import SGD
 from keras.utils import plot_model
-from keras.callbacks import CSVLogger
+from keras.callbacks import CSVLogger, ModelCheckpoint
 
 # Feature scaling import
 from sklearn.preprocessing import minmax_scale # [0-1] Scaling
@@ -135,13 +135,15 @@ def main(config):
     # 3.save network model
     print '3. Save Network Model...'
     SaveNetworkModel(model, config['model-dir'])
-    csv_logger = CSVLogger('{}/log.csv'.format(config['model-dir']), append=True, separator=';')
+    callback_list = [CSVLogger('{}/log.csv'.format(config['model-dir']), append=True, separator=';'),
+                    ModelCheckpoint(filepath=config['model-dir'] + '/{epoch:02d}-{val_loss:.4f}.h5',
+                                        monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True)]
 
     # 4.training
     print '4. Training Network Model...'
     history = model.fit(image_train, label_train, batch_size=config['batch-size'], epochs=config['epochs'],
                             validation_split=config['val-split'], shuffle=config['shuffle'],
-                            verbose=2, callbacks=[csv_logger])
+                            verbose=2, callbacks=callback_list)
 
     # 5.save trained weight
     print '5. Save Trained Weight(*.h5)...'
