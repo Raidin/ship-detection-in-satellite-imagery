@@ -148,7 +148,7 @@ def main(config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some parameters.')
     parser.add_argument('--job-name', default='AlexNet', help='Current operation job name')
-    parser.add_argument('--save_bbox', type=bool, default='True', help='Is Apply Saving BBox')
+    parser.add_argument('--save-bbox', type=bool, default='True', help='Is Apply Saving BBox')
     args = parser.parse_args()
 
     cur_dir = os.getcwd()
