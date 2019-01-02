@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 import os
 
+from vis_feature_map import VisualizeFeatureMap
 from common import make_if_not_exist
 from matplotlib import pyplot as plt
 from keras.models import model_from_json
@@ -124,7 +125,14 @@ def main(config):
                 if result[0][1] > 0.90 and CheckNearWindow(x * step, y * step, 88, coordinates):
                     # print 'Probability :: ', result[0][1]
                     coordinates.append([[x * step, y * step], result])
+                    if config['save-featuremap']:
+                        # save feature map
+                        feature_map_dir = os.path.join(sub_dir, '{}'.format(result[0][1]))
+                        print feature_map_dir
+                        make_if_not_exist(feature_map_dir)
+                        VisualizeFeatureMap(model, area, feature_map_dir)
                     if config['save-bbox']:
+                        # save detected bounding box
                         area = np.squeeze(area, axis=0)
                         plt.imshow(area)
                         plt.title('Probability :: {}'.format(result[0][1]))
@@ -149,6 +157,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some parameters.')
     parser.add_argument('--job-name', default='AlexNet', help='Current operation job name')
     parser.add_argument('--save-bbox', type=bool, default='True', help='Is Apply Saving BBox')
+    parser.add_argument('--save-featuremap', type=bool, default='True', help='Each Detected BBox Feature Saving')
     parser.add_argument('--test-data-path', default='scenes', help='Test Data Path')
 
     args = parser.parse_args()
@@ -162,6 +171,7 @@ if __name__ == '__main__':
 
     config = {'job-name': args.job_name,
                 'save-bbox': args.save_bbox,
+                'save-featuremap': args.save_featuremap,
                 'root-dir': root_dir,
                 'work-dir': work_dir,
                 'jobs-dir': jobs_dir,
