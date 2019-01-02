@@ -101,7 +101,7 @@ def main(config):
     # Load Network Model
     model = LoadModel(config['model-dir'])
     # Test Data Path
-    data_dir = os.path.join(config['root-dir'], 'data/scenes')
+    data_dir = os.path.join(config['root-dir'], 'data', config['test-data-path'])
 
     # Test Image list Load
     for idx, img_file in tqdm(enumerate(os.listdir(data_dir))):
@@ -149,6 +149,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some parameters.')
     parser.add_argument('--job-name', default='AlexNet', help='Current operation job name')
     parser.add_argument('--save-bbox', type=bool, default='True', help='Is Apply Saving BBox')
+    parser.add_argument('--test-data-path', default='scenes', help='Test Data Path')
+
     args = parser.parse_args()
 
     cur_dir = os.getcwd()
@@ -164,7 +166,8 @@ if __name__ == '__main__':
                 'work-dir': work_dir,
                 'jobs-dir': jobs_dir,
                 'model-dir': model_dir,
-                'output-dir': output_dir}
+                'output-dir': output_dir,
+                'test-data-path': args.test_data_path}
 
     print '\n\n::::: Configuration Value :::::'
     for config_key in config.keys():
