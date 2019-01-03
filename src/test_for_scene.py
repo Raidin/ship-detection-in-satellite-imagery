@@ -128,7 +128,6 @@ def main(config):
                     if config['save-featuremap']:
                         # save feature map
                         feature_map_dir = os.path.join(sub_dir, '{}'.format(result[0][1]))
-                        print feature_map_dir
                         make_if_not_exist(feature_map_dir)
                         VisualizeFeatureMap(model, area, feature_map_dir)
                     if config['save-bbox']:
