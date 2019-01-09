@@ -12,15 +12,17 @@ from PIL import Image
 # [0-1] Scaling
 from sklearn.preprocessing import minmax_scale
 
+window_size = 80
+
 def CropImage(img, x, y):
-    area_study = np.arange(3 * 80 * 80).reshape(3, 80, 80).astype('float64')
-    for i in range(80):
-        for j in range(80):
+    area_study = np.arange(3 * window_size * window_size).reshape(3, window_size, window_size).astype('float64')
+    for i in range(window_size):
+        for j in range(window_size):
             area_study[0][i][j] = img[0][y + i][x + j]
             area_study[1][i][j] = img[1][y + i][x + j]
             area_study[2][i][j] = img[2][y + i][x + j]
 
-    area_study = area_study.reshape([-1, 3, 80, 80])
+    area_study = area_study.reshape([-1, 3, window_size, window_size])
     area_study = area_study.transpose([0, 2, 3, 1])
 
     # area_study = area_study / 255.0
@@ -37,32 +39,31 @@ def CheckNearWindow(x, y, s, coordinates):
 # Before Display Detection Box Method
 def DisplayBox(img, x, y, acc, thickness=1):
     # Left
-    for i in range(80):
+    for i in range(window_size):
         for th in range(thickness):
             img[0][y + i][x - th] = 255
             img[1][y + i][x - th] = 0
             img[2][y + i][x - th] = 0
 
     # Right
-    for i in range(80):
+    for i in range(window_size):
         for th in range(thickness):
-            img[0][y + i][x + th + 80] = 255
-            img[1][y + i][x + th + 80] = 0
-            img[2][y + i][x + th + 80] = 0
+            img[0][y + i][x + th + window_size] = 255
+            img[1][y + i][x + th + window_size] = 0
+            img[2][y + i][x + th + window_size] = 0
 
     # Top
-    for i in range(80):
+    for i in range(window_size):
         for th in range(thickness):
             img[0][y - th][x + i] = 255
             img[1][y - th][x + i] = 0
             img[2][y - th][x + i] = 0
 
     # Bottom
-    for i in range(80):
         for th in range(thickness):
             img[0][y + th + 80][x + i] = 255
-            img[1][y + th + 80][x + i] = 0
-            img[2][y + th + 80][x + i] = 0
+            img[0][y + th + window_size][x + i] = 255
+            img[1][y + th + window_size][x + i] = 0
 
 def LoadModel(model_dir):
     # Load Network Model
@@ -118,8 +119,8 @@ def main(config):
         coordinates = []
 
         # Window Sliding Processing Logic
-        for y in tqdm(range(int((height - (80 - step)) / step))):
-            for x in range(int((width - (80 - step)) / step)):
+        for y in tqdm(range(int((height - (window_size - step)) / step))):
+            for x in range(int((width - (window_size - step)) / step)):
                 area = CropImage(picture_tensor, x * step, y * step)
                 result = model.predict(area)
                 if result[0][1] > 0.90 and CheckNearWindow(x * step, y * step, 88, coordinates):
@@ -144,7 +145,7 @@ def main(config):
         plt.imshow(picture_tensor)
         for e in coordinates:
             # DisplayBox(picture_tensor, e[0][0], e[0][1], e[1][0][1])
-            rect = plt.Rectangle((e[0][0], e[0][1]), 80, 80, fill=False, edgecolor=(1, 0, 0), linewidth=2.5)
+            rect = plt.Rectangle((e[0][0], e[0][1]), window_size, window_size, fill=False, edgecolor=(1, 0, 0), linewidth=2.5)
             plt.gca().add_patch(rect)
             plt.gca().text(e[0][0], e[0][1], 'prob ::  {:.3f}'.format(e[1][0][1]),
                                 bbox=dict(facecolor=(1, 0, 0), alpha=0.5), fontsize=9, color='white')
