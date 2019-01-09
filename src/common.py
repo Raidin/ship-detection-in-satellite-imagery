@@ -6,6 +6,7 @@ Writer : jihunjung
 """
 
 import os
+from PIL import Image
 
 def check_if_isfile(file_path):
     return os.path.isfile(file_path)
@@ -19,6 +20,12 @@ def make_if_not_exist(path):
 
 def main():
     return
+
+def Numpy2Image(arr, save_dir):
+    # Transpose to Image Type
+    # arr shape :: h x w x c
+    result_image = Image.fromarray(arr)
+    result_image.save(save_dir, 'PNG')
 
 
 if __name__ == '__main__':
