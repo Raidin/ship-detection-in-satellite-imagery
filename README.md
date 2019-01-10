@@ -2,11 +2,20 @@
 
 ## ENVIRONMENTS
  * Ubuntu 16.04 LTS
- * TensorFlow 1.4.0
- * Keras 2.0.8
+ * TensorFlow 1.12.0
+ * Keras 2.2.4
  * Python 2.7
  * CUDA 8.0
  * cuDNN 6.0
+
+## PYTHON LIBRARY
+ * image==1.5.27
+ * matplotlib==2.2.3
+ * numpy==1.15.4
+ * opencv-python==4.0.0.21
+ * Pillow==5.4.1
+ * scikit-learn==0.20.2
+ * tqdm==4.29.0
 
 ## DATASET
  * Kaggle-Ship-Detection :: [Ships in satellite Imagery](https://www.kaggle.com/rhammell/ships-in-satellite-imagery/home)
