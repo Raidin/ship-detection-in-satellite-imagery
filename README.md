@@ -9,8 +9,7 @@
  * cuDNN 6.0
 
 ## DATASET
- * Kaggle-Ship-Detection
- * [Ships in satellite Imagery](https://www.kaggle.com/rhammell/ships-in-satellite-imagery/home)
+ * Kaggle-Ship-Detection :: [Ships in satellite Imagery](https://www.kaggle.com/rhammell/ships-in-satellite-imagery/home)
 
 ## DIRECTORY STRUCTURE
 ```
