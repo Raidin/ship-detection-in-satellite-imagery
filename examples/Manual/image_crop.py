@@ -5,12 +5,12 @@ import sys
 from tqdm import tqdm
 from PIL import Image
 
-sys.path.insert(1, '../')
+sys.path.insert(1, '../../src')
 from common import make_if_not_exist, Numpy2Image
 
 import cv2
 
-img = cv2.imread('/home/jihunjung/Downloads/satellite_output_2.jpg')
+img = cv2.imread('/home/jihunjung/ship_detection/data/aventior_test/kaggle-ship_00.png')
 
 print img.shape
 
