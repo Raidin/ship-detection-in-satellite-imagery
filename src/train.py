@@ -41,7 +41,7 @@ from keras.utils import np_utils
 from keras.optimizers import SGD
 from keras.utils import plot_model
 from keras.callbacks import CSVLogger, ModelCheckpoint
-
+from keras.preprocessing.image import ImageDataGenerator
 # Feature scaling import
 from sklearn.preprocessing import minmax_scale # [0-1] Scaling
 
@@ -102,7 +102,7 @@ def LoadDataset(root):
     height = 80
 
     # normalization to [0~1] (Using min/max scaling)
-    input_data = minmax_scale(input_data, feature_range=(0, 1), axis=0)
+    # input_data = minmax_scale(input_data, feature_range=(0, 1), axis=0)
 
     # input image & label reshape
     images = input_data.reshape([-1, channel, weight, height]).transpose([0, 2, 3, 1])
@@ -118,12 +118,37 @@ def LoadDataset(root):
     return image_train, label_train
 
 def main(config):
-    # 1.Load Dataset
+    # define numpy seed
+    np.random.seed(42)
+
+    # 1-1..Load Dataset
     print '1. Load Dataset...'
     image_train, label_train = LoadDataset(config['root-dir'])
 
-    # define numpy seed
-    np.random.seed(42)
+    # 1-2. Data Augmentation
+    train_datagen = ImageDataGenerator(
+        rescale=1. / 255,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        rotation_range=90,
+        shear_range=0.5,
+        zoom_range=[0.8, 1.5],
+        horizontal_flip=True,
+        vertical_flip=True,
+        fill_mode='nearest',
+        validation_split=config['val-split'])
+
+    train_datagen.fit(image_train)
+
+    train_generator = train_datagen.flow(image_train, label_train,
+                                                batch_size=config['batch-size'],
+                                                shuffle=config['shuffle'],
+                                                subset='training')
+
+    validation_generator = train_datagen.flow(image_train, label_train,
+                                                batch_size=config['batch-size'],
+                                                shuffle=config['shuffle'],
+                                                subset='validation')
 
     # 2.Generate Model
     print '2. Generate Model...'
@@ -141,9 +166,25 @@ def main(config):
 
     # 4.training
     print '4. Training Network Model...'
-    history = model.fit(image_train, label_train, batch_size=config['batch-size'], epochs=config['epochs'],
-                            validation_split=config['val-split'], shuffle=config['shuffle'],
-                            verbose=2, callbacks=callback_list)
+    '''
+    history = model.fit(
+        image_train,
+        label_train,
+        batch_size=config['batch-size'],
+        epochs=config['epochs'],
+        validation_split=config['val-split'],
+        shuffle=config['shuffle'],
+        verbose=2,
+        callbacks=callback_list)
+    '''
+    history = model.fit_generator(
+        train_generator,
+        steps_per_epoch=(int((image_train.shape[0] * (1.0 - config['val-split'])) / config['batch-size'])) * 5,
+        epochs=config['epochs'],
+        validation_data=validation_generator,
+        validation_steps=(int((image_train.shape[0] * config['val-split']) / config['batch-size'])),
+        verbose=1,
+        callbacks=callback_list)
 
     # 5.save trained weight
     print '5. Save Trained Weight(*.h5)...'
@@ -158,7 +199,7 @@ if __name__ == '__main__':
     parser.add_argument('job_name', help='Current operation job name')
     parser.add_argument('--val-split', type=float, default=0.2, help='Training Parameter-Validation set percentage(Type:float, default Value:0.2)')
     parser.add_argument('--batch-size', type=int, default=32, help='Training Parameter-batch size(Type:integer, default Value:32)')
-    parser.add_argument('--epochs', type=int, default=20, help='Training Parameter-Epoch(Type:integer, default Value:20)')
+    parser.add_argument('--epochs', type=int, default=100, help='Training Parameter-Epoch(Type:integer, default Value:20)')
     parser.add_argument('--shuffle', type=bool, default=True, help='Training Parameter-Is Apply Suffle(Type:bool, default Value:True)')
     parser.add_argument('--learning-rate', type=float, default=1e-2, help='Training Parameter-Learning Rate(Type:float, default Value:1e-2)')
     args = parser.parse_args()
