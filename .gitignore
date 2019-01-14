@@ -2,5 +2,6 @@ model/
 result/
 data/
 work/
+augmentation_sample/
 *.pyc
 
