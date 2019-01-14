@@ -111,7 +111,8 @@ def main(config):
         width, height, picture_tensor = ReadImage(input_image, idx)
 
         sub_dir = os.path.join(config['output-dir'], 'image_{}'.format(idx))
-        make_if_not_exist(sub_dir)
+        if config['save-featuremap'] or config['save-bbox']:
+            make_if_not_exist(sub_dir)
 
         # Window Sliding Stride
         step = 10
@@ -156,9 +157,10 @@ def main(config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some parameters.')
     parser.add_argument('--job-name', default='AlexNet', help='Current operation job name')
-    parser.add_argument('--save-bbox', type=bool, default='True', help='Is Apply Saving BBox')
-    parser.add_argument('--save-featuremap', type=bool, default='True', help='Each Detected BBox Feature Saving')
-    parser.add_argument('--test-data-path', default='scenes', help='Test Data Path')
+    parser.add_argument('--save-bbox', type=bool, default='False', help='Is Apply Saving BBox')
+    parser.add_argument('--save-featuremap', type=bool, default='False', help='Each Detected BBox Feature Saving')
+    # parser.add_argument('--test-data-path', default='scenes', help='Test Data Path')
+    parser.add_argument('--test-data-path', default='aventior_test', help='Test Data Path')
 
     args = parser.parse_args()
 
