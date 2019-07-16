@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from PIL import Image
 
-image = Image.open('data/scenes/sfbay_2.png')
+image = Image.open('../../data/scenes/sfbay_2.png')
 pix = image.load()
 
 n_spectrum = 3
